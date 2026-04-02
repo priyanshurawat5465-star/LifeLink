@@ -25,9 +25,6 @@ A modern, full-stack web application for connecting blood donors with hospitals 
 - **JWT** - Authentication tokens
 - **bcryptjs** - Password hashing
 - **dotenv** - Environment variables
-- **cors** - Cross-origin resource sharing
-- **helmet** - Security headers
-- **express-rate-limit** - Rate limiting
 
 ### Frontend
 - **HTML5** - Markup
@@ -192,16 +189,6 @@ npm run dev
 3. Search for available donors by blood group and location
 4. Send blood requests to matched donors
 
-## Security Features
-
-- JWT-based authentication with expiration
-- bcrypt password hashing (12 salt rounds)
-- Rate limiting to prevent abuse
-- CORS configuration
-- Helmet.js security headers
-- Input validation and sanitization
-- GeoJSON coordinate validation
-
 ## Development
 
 ### Available Scripts
@@ -225,10 +212,6 @@ npm run dev
 4. Add tests if applicable
 5. Submit a pull request
 
-## License
-
-This project is licensed under the ISC License.
-
 ## Future Enhancements
 
 - Real-time notifications with Socket.io
@@ -240,14 +223,6 @@ This project is licensed under the ISC License.
 - Donor rewards and recognition system
 - Advanced analytics and reporting
 - Mobile app development
-
-## Support
-
-For support and questions, please contact:
-- Email: contact@bloodconnect.com
-- Emergency: 1-800-BLOOD-HELP
-
----
 
 **Save Lives, Donate Blood!** ❤️
 >>>>>>> d0553a6 (Initial Commit)
