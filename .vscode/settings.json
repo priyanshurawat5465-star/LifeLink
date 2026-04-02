@@ -1,0 +1,19 @@
+{
+    "terminal.integrated.shell.windows": "powershell",
+    "files.exclude": {
+        "**/node_modules": false,
+        "**/.git": false,
+        "**/.DS_Store": false,
+        "**/Thumbs.db": false
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/.git": true
+    },
+    "emmet.includeLanguages": {
+        "javascript": "javascriptreact"
+    },
+    "liveServer.settings.port": 3000,
+    "liveServer.settings.root": "/public"
+}

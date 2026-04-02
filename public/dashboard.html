@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard - BloodConnect</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <style>
+        .dashboard-container {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .profile-card {
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: none;
+            transition: transform 0.3s ease;
+        }
+        .profile-card:hover {
+            transform: translateY(-5px);
+        }
+        .availability-toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .availability-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #28a745;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
+        .blood-group-badge {
+            font-size: 1.2rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .sidebar {
+            background-color: #dc3545;
+            min-height: 100vh;
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .stats-card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+        }
+        .stats-card:hover {
+            transform: translateY(-3px);
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .profile-section {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow-sm">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                    <i class="fas fa-heart-pulse me-2"></i>BloodConnect
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-2"></i>
+                                <span id="navUserName">Loading...</span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="editProfile()"><i class="fas fa-edit me-2"></i>Edit Profile</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid">
+            <div class="row">
+                <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                    <div class="position-sticky pt-3">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#" onclick="showSection('dashboard')">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" onclick="showSection('profile')">
+                                    <i class="fas fa-user me-2"></i>My Profile
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" onclick="showSection('donations')">
+                                    <i class="fas fa-hand-holding-heart me-2"></i>Donation History
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" onclick="showSection('requests')">
+                                    <i class="fas fa-bell me-2"></i>Blood Requests
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" onclick="showSection('settings')">
+                                    <i class="fas fa-cog me-2"></i>Settings
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Donor Dashboard</h1>
+                        <div class="loading-spinner">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="alertMessage" class="alert d-none" role="alert"></div>
+
+                    <div id="dashboardSection" class="content-section">
+                        <div class="row mb-4">
+                            <div class="col-lg-8">
+                                <div class="card profile-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <h5 class="card-title fw-bold">
+                                                <i class="fas fa-user-circle me-2"></i>Donor Profile
+                                            </h5>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input availability-toggle" type="checkbox" id="availabilityToggle">
+                                                <label class="form-check-label" for="availabilityToggle">
+                                                    <small class="text-muted">Available for donation</small>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="profile-section">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <p class="mb-2">
+                                                        <strong><i class="fas fa-user me-2"></i>Name:</strong>
+                                                        <span id="profileName">Loading...</span>
+                                                    </p>
+                                                    <p class="mb-2">
+                                                        <strong><i class="fas fa-envelope me-2"></i>Email:</strong>
+                                                        <span id="profileEmail">Loading...</span>
+                                                    </p>
+                                                    <p class="mb-2">
+                                                        <strong><i class="fas fa-phone me-2"></i>Phone:</strong>
+                                                        <span id="profilePhone">Loading...</span>
+                                                    </p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <p class="mb-2">
+                                                        <strong><i class="fas fa-tint me-2"></i>Blood Group:</strong>
+                                                        <span id="profileBloodGroup" class="badge bg-danger blood-group-badge ms-2">Loading...</span>
+                                                    </p>
+                                                    <p class="mb-2">
+                                                        <strong><i class="fas fa-map-marker-alt me-2"></i>Address:</strong>
+                                                        <span id="profileAddress">Loading...</span>
+                                                    </p>
+                                                    <p class="mb-2">
+                                                        <strong><i class="fas fa-map me-2"></i>Location:</strong>
+                                                        <span id="profileLocation" class="badge bg-primary status-badge ms-2">Loading...</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center mt-3">
+                                            <span id="availabilityStatus" class="badge status-badge">
+                                                <i class="fas fa-circle me-2"></i>
+                                                <span id="availabilityText">Checking...</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="card stats-card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-hand-holding-heart text-danger fa-3x mb-3"></i>
+                                        <h6 class="card-title">Total Donations</h6>
+                                        <h3 class="text-danger fw-bold">0</h3>
+                                    </div>
+                                </div>
+
+                                <div class="card stats-card mb-3">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-clock text-warning fa-3x mb-3"></i>
+                                        <h6 class="card-title">Last Donation</h6>
+                                        <p class="text-muted">Never</p>
+                                    </div>
+                                </div>
+
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-trophy text-success fa-3x mb-3"></i>
+                                        <h6 class="card-title">Lives Saved</h6>
+                                        <h3 class="text-success fw-bold">0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title fw-bold mb-3">
+                                            <i class="fas fa-bell me-2"></i>Recent Blood Requests
+                                        </h5>
+                                        <div class="text-center text-muted py-4">
+                                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                                            <p>No blood requests at the moment</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="profileSection" class="content-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold mb-4">
+                                    <i class="fas fa-edit me-2"></i>Edit Profile
+                                </h5>
+                                <form id="editProfileForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="editName" class="form-label">Full Name</label>
+                                                <input type="text" class="form-control" id="editName" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="editPhone" class="form-label">Phone Number</label>
+                                                <input type="tel" class="form-control" id="editPhone" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editAddress" class="form-label">Address</label>
+                                        <textarea class="form-control" id="editAddress" rows="3" required></textarea>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-save me-2"></i>Save Changes
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" onclick="showSection('dashboard')">
+                                            <i class="fas fa-times me-2"></i>Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="donationsSection" class="content-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-hand-holding-heart fa-4x text-muted mb-3"></i>
+                                <h5>Donation History</h5>
+                                <p class="text-muted">Your donation history will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="requestsSection" class="content-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-bell fa-4x text-muted mb-3"></i>
+                                <h5>Blood Requests</h5>
+                                <p class="text-muted">Blood requests in your area will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="settingsSection" class="content-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-cog fa-4x text-muted mb-3"></i>
+                                <h5>Settings</h5>
+                                <p class="text-muted">Account settings will be available here</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
