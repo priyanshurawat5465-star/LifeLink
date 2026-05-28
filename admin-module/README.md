@@ -176,9 +176,6 @@ admin-module/
 +-- README.md              # This file
 ```
 
-### Environment Variables
-Create a `.env` file for configuration:
-```
 PORT=5003
 MONGODB_URI=mongodb://localhost:27017/bloodDB
 ```
@@ -230,18 +227,3 @@ MONGODB_URI=mongodb://localhost:27017/bloodDB
 4. **Port Already in Use**
    - Change PORT in .env file or use different port
    - Check for other processes using port 5003
-
-## Security Considerations
-
-- This module provides administrative access to sensitive data
-- Ensure proper authentication and authorization in production
-- Regular security audits of admin functions
-- Log all administrative actions for audit trails
-
-## License
-
-This module is part of the Blood Donation System and is licensed under the MIT License.
-
-## Support
-
-For support and queries, please contact the development team or create an issue in the main repository.
