@@ -9,7 +9,7 @@ Each module now has its own independent backend and can run standalone! You can 
 ## Project Structure
 
 ```
-BloodDFinal/
+LifeLink/
 |
 +-- donor-module/                 # Standalone Donor Module
 |   +-- server.js                 # Independent backend (Port 5001)
@@ -118,83 +118,40 @@ Each module can run independently with its own backend:
 #### Donor Module Only
 ```bash
 cd donor-module
-npm install
-npm start
+node server.js
 # Access at: http://localhost:5001
 ```
 
 #### Hospital Module Only
 ```bash
 cd hospital-module
-npm install
-npm start
+node server.js
 # Access at: http://localhost:5002
 ```
 
 #### Admin Module Only
 ```bash
 cd admin-module
-npm install
-npm start
+node server.js
 # Access at: http://localhost:5003
 ```
 
 #### Public Statistics Only
 ```bash
 cd public-stats
-npm install
-npm start
+node server.js
 # Access at: http://localhost:5004
-```
-
-### **Option 2: Run All Modules Together (Shortcut Commands)**
-
-**Windows Users:**
-```bash
-# Double-click or run in terminal
-start-all.bat
-```
-
-**Linux/Mac Users:**
-```bash
-# Make executable and run
-chmod +x start-all.sh
-./start-all.sh
-```
-
-**Manual Method:**
-```bash
-# Terminal 1 - Donor Module
-cd donor-module && npm start
-
-# Terminal 2 - Hospital Module  
-cd hospital-module && npm start
-
-# Terminal 3 - Admin Module
-cd admin-module && npm start
-
-# Terminal 4 - Public Statistics
-cd public-stats && npm start
-```
-
-### **Option 3: Legacy Monolithic Setup**
-
-```bash
-cd BloodDFinal
-npm install
-npm start
-# Access at: http://localhost:5000
 ```
 
 ## Module Access URLs
 
-| Module | Port | Access URL |
-|--------|------|------------|
-| Donor Module | 5001 | http://localhost:5001 |
-| Hospital Module | 5002 | http://localhost:5002 |
-| Admin Module | 5003 | http://localhost:5003 |
+|      Module       | Port |      Access URL       |
+|-------------------|------|-----------------------|
+| Donor Module      | 5001 | http://localhost:5001 |
+| Hospital Module   | 5002 | http://localhost:5002 |
+| Admin Module      | 5003 | http://localhost:5003 |
 | Public Statistics | 5004 | http://localhost:5004 |
-| Legacy System | 5000 | http://localhost:5000 |
+| Legacy System     | 5000 | http://localhost:5000 |
 
 ## API Endpoints
 
@@ -343,11 +300,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
-
-## Support
-
-For support and queries, please contact the development team or create an issue in the repository.
-
----
-
-**Note**: This is a demonstration project. For production use, ensure proper security measures, database backups, and scalability considerations are implemented.

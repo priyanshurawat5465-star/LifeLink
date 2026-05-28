@@ -3,7 +3,17 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const nodemailer = require('nodemailer');
+
+// Configure Nodemailer Transporter
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
 
 const app = express();
 const PORT = process.env.HOSPITAL_PORT || 5002; // Different port for hospital module
@@ -99,6 +109,95 @@ app.post('/api/hospitals/register', async (req, res) => {
     }
 });
 
+// Send blood request alert and email donors
+app.post('/api/alerts/send', async (req, res) => {
+    try {
+        const { hospitalId, bloodTypeNeeded, priorityLevel, location, maxDistance = 10000 } = req.body;
+        
+        // 1. Fetch hospital details
+        const hospital = await Hospital.findById(hospitalId);
+        if (!hospital) {
+            return res.status(404).json({ success: false, error: 'Hospital not found' });
+        }
+
+        // 2. Create the database request
+        const request = new Request({
+            hospitalId,
+            bloodTypeNeeded,
+            priorityLevel,
+            location,
+            status: 'Pending'
+        });
+        await request.save();
+
+        // 3. Find nearby donors (call donor module API)
+        try {
+            const donorResponse = await fetch('http://localhost:5001/api/donors/nearby', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    bloodType: bloodTypeNeeded,
+                    location: location,
+                    maxDistance: maxDistance
+                })
+            });
+            
+            const donorResult = await donorResponse.json();
+            const nearbyDonors = donorResult.donors || [];
+
+            // 4. Send Emails via Nodemailer
+            if (nearbyDonors.length > 0) {
+                const donorEmails = nearbyDonors.map(donor => donor.email).filter(email => email);
+
+                if (donorEmails.length > 0) {
+                    const mailOptions = {
+                        from: process.env.EMAIL_USER,
+                        bcc: donorEmails, 
+                        subject: `URGENT: ${bloodTypeNeeded} Blood Required at ${hospital.name}`,
+                        html: `
+                            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                                <h2 style="color: #B91C1C;">Urgent Blood Request: ${bloodTypeNeeded}</h2>
+                                <p><strong>Hospital:</strong> ${hospital.name}</p>
+                                <p><strong>Address:</strong> ${hospital.address}</p>
+                                <p><strong>Priority Level:</strong> <span style="color: #B91C1C; font-weight: bold;">${priorityLevel}</span></p>
+                                <hr style="border: 1px solid #eee; margin: 15px 0;">
+                                <p>You are receiving this alert because you are a registered donor nearby.</p>
+                                <p>If you are available to donate, please visit the hospital immediately.</p>
+                            </div>
+                        `
+                    };
+
+                    transporter.sendMail(mailOptions, (error, info) => {
+                        if (error) console.error('Email Dispatch Error:', error);
+                        else console.log(`Alert emails successfully sent to ${donorEmails.length} donors.`);
+                    });
+                }
+            }
+            
+            res.json({
+                success: true,
+                request,
+                nearbyDonors: donorResult.nearbyDonors || 0,
+                donors: nearbyDonors
+            });
+            
+        } catch (donorError) {
+            console.error('Error calling donor module:', donorError);
+            res.json({
+                success: true,
+                request,
+                nearbyDonors: 0,
+                donors: [],
+                warning: 'Donor module not available. Request saved but no emails sent.'
+            });
+        }
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+});
+
 // Get hospital by ID
 app.get('/api/hospitals/:id', async (req, res) => {
     try {
@@ -143,51 +242,7 @@ app.get('/api/alerts', async (req, res) => {
     }
 });
 
-// Send blood request alert
-app.post('/api/alerts/send', async (req, res) => {
-    try {
-        const request = new Request(req.body);
-        await request.save();
-        
-        let nearbyDonors = 0;
-        let donors = [];
-        
-        // Find nearby donors (call donor module API)
-        try {
-            const donorResponse = await fetch('http://localhost:5001/api/donors/nearby', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    bloodType: req.body.bloodTypeNeeded,
-                    location: req.body.location,
-                    maxDistance: req.body.maxDistance || 10000 // 10km default
-                })
-            });
-            
-            const donorResult = await donorResponse.json();
-            if (donorResult.success && donorResult.donors) {
-                nearbyDonors = donorResult.donors.length;
-                donors = donorResult.donors;
-            }
-            
-            console.log('Alert sent to donors:', nearbyDonors);
-        } catch (donorError) {
-            console.error('Error calling donor module:', donorError);
-        }
-        
-        res.status(201).json({ 
-            success: true, 
-            request, 
-            nearbyDonors, 
-            donors,
-            message: `Alert sent successfully! Found ${nearbyDonors} nearby donors.`
-        });
-    } catch (error) {
-        res.status(400).json({ success: false, error: error.message });
-    }
-});
+
 
 // Get all hospitals
 app.get('/api/hospitals', async (req, res) => {
@@ -230,57 +285,6 @@ app.put('/api/hospitals/:id/inventory', async (req, res) => {
     }
 });
 
-// Send blood request alert
-app.post('/api/alerts/send', async (req, res) => {
-    try {
-        const { hospitalId, bloodTypeNeeded, priorityLevel, location, maxDistance = 10000 } = req.body;
-        
-        // Create the request
-        const request = new Request({
-            hospitalId,
-            bloodTypeNeeded,
-            priorityLevel,
-            location,
-            status: 'Pending'
-        });
-        await request.save();
-
-        // Find nearby donors (call donor module API)
-        try {
-            const donorResponse = await fetch('http://localhost:5001/api/donors/nearby', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    bloodType: bloodTypeNeeded,
-                    location: location,
-                    maxDistance: maxDistance
-                })
-            });
-            
-            const donorResult = await donorResponse.json();
-            
-            res.json({
-                success: true,
-                request,
-                nearbyDonors: donorResult.nearbyDonors || 0,
-                donors: donorResult.donors || []
-            });
-        } catch (donorError) {
-            // If donor module is not available, still create the request
-            res.json({
-                success: true,
-                request,
-                nearbyDonors: 0,
-                donors: [],
-                warning: 'Donor module not available'
-            });
-        }
-    } catch (error) {
-        res.status(400).json({ success: false, error: error.message });
-    }
-});
 
 // Get all hospitals
 app.get('/api/hospitals', async (req, res) => {
