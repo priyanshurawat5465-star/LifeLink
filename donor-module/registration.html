@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Registration - Blood Donation System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-red: #B91C1C;
+            --secondary-gray: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--secondary-gray);
+        }
+        
+        .navbar {
+            background-color: var(--primary-red) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+        }
+        
+        .btn-primary:hover {
+            background-color: #991b1b;
+            border-color: #991b1b;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 0.2rem rgba(185, 28, 28, 0.25);
+        }
+        
+        #map {
+            height: 300px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .location-info {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand text-white" href="http://localhost:5004">
+                <i class="fas fa-heartbeat"></i> Blood Donation System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link text-white" href="http://localhost:5004">Home</a>
+                <a class="nav-link text-white" href="http://localhost:5001/login">Login</a>
+                <a class="nav-link text-white active" href="http://localhost:5001">Register</a>
+                <a class="nav-link text-white" href="http://localhost:5001/dashboard">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h3 class="text-center mb-0" style="color: var(--primary-red);">
+                            <i class="fas fa-user-plus"></i> Donor Registration
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="registrationForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="name" class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" id="name" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control" id="email" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Phone Number *</label>
+                                    <input type="tel" class="form-control" id="phone" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="password" class="form-label">Password *</label>
+                                    <input type="password" class="form-control" id="password" required minlength="6">
+                                    <small class="text-muted">Minimum 6 characters</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="confirmPassword" class="form-label">Confirm Password *</label>
+                                    <input type="password" class="form-control" id="confirmPassword" required minlength="6">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="bloodGroup" class="form-label">Blood Group *</label>
+                                    <select class="form-control" id="bloodGroup" required>
+                                        <option value="">Select Blood Group</option>
+                                        <option value="A+">A+</option>
+                                        <option value="A-">A-</option>
+                                        <option value="B+">B+</option>
+                                        <option value="B-">B-</option>
+                                        <option value="AB+">AB+</option>
+                                        <option value="AB-">AB-</option>
+                                        <option value="O+">O+</option>
+                                        <option value="O-">O-</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="medicalHistory" class="form-label">Medical History</label>
+                                <textarea class="form-control" id="medicalHistory" rows="3" 
+                                    placeholder="Please mention any medical conditions, medications, or allergies..."></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Location Information</label>
+                                <div class="location-info">
+                                    <small class="text-muted">Your location will be automatically captured for emergency alerts</small>
+                                    <div id="locationDetails" class="mt-2">
+                                        <strong>Coordinates:</strong> <span id="coordinates">Getting location...</span>
+                                    </div>
+                                </div>
+                                <div id="map"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="terms" required>
+                                    <label class="form-check-label" for="terms">
+                                        I agree to the terms and conditions and consent to receive emergency blood donation alerts
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-check-circle"></i> Register as Donor
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+    <script>
+        let map;
+        let marker;
+        let userLocation = { lat: null, lng: null };
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([20.5937, 78.9629], 5); // Default to India center
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        // Get user location
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        userLocation.lat = position.coords.latitude;
+                        userLocation.lng = position.coords.longitude;
+                        
+                        document.getElementById('coordinates').textContent = 
+                            `${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`;
+                        
+                        // Update map view and add marker
+                        map.setView([userLocation.lat, userLocation.lng], 15);
+                        
+                        if (marker) {
+                            marker.setLatLng([userLocation.lat, userLocation.lng]);
+                        } else {
+                            marker = L.marker([userLocation.lat, userLocation.lng]).addTo(map);
+                        }
+                    },
+                    (error) => {
+                        console.error('Error getting location:', error);
+                        document.getElementById('coordinates').textContent = 
+                            'Unable to get location. Please enable location services.';
+                    }
+                );
+            } else {
+                document.getElementById('coordinates').textContent = 
+                    'Geolocation is not supported by this browser.';
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validate passwords match
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match. Please try again.');
+                document.getElementById('confirmPassword').value = '';
+                return;
+            }
+            
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                return;
+            }
+            
+            if (!userLocation.lat || !userLocation.lng) {
+                alert('Please enable location services to register your donor profile.');
+                return;
+            }
+
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: password, // Add password to form data
+                phone: document.getElementById('phone').value,
+                bloodGroup: document.getElementById('bloodGroup').value,
+                medicalHistory: document.getElementById('medicalHistory').value,
+                location: {
+                    type: 'Point',
+                    coordinates: [userLocation.lng, userLocation.lat] // MongoDB expects [longitude, latitude]
+                },
+                status: 'Offline' // Default status
+            };
+
+            try {
+                const response = await fetch('http://localhost:5001/api/donors/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Registration successful! Redirecting to dashboard...');
+                    localStorage.setItem('donorId', result.donor._id);
+                    window.location.href = 'http://localhost:5001/dashboard';
+                } else {
+                    alert('Registration failed: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during registration. Please try again.');
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            getUserLocation();
+        });
+    </script>
+</body>
+</html>

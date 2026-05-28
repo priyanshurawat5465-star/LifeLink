@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Login - Blood Donation System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #B91C1C;
+            --secondary-gray: #f8f9fa;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--primary-red) 0%, #dc3545 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+            margin: 20px;
+        }
+        
+        .login-left {
+            background: linear-gradient(135deg, var(--primary-red) 0%, #dc3545 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+        
+        .login-right {
+            padding: 60px 40px;
+        }
+        
+        .hospital-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin: 0 auto 30px;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 0.2rem rgba(185, 28, 28, 0.25);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #991b1b;
+            border-color: #991b1b;
+        }
+        
+        .feature-item {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .feature-item i {
+            margin-right: 10px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        @media (max-width: 768px) {
+            .login-left {
+                display: none;
+            }
+            
+            .login-right {
+                padding: 40px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="row g-0">
+            <div class="col-md-5">
+                <div class="login-left">
+                    <div class="hospital-avatar">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <h2 class="mb-4">Hospital Portal</h2>
+                    <p class="mb-4">Manage blood inventory, generate emergency requests, and track donor responses efficiently</p>
+                    
+                    <div class="feature-item">
+                        <i class="fas fa-tint"></i>
+                        <span>Inventory Management</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Emergency Requests</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-map"></i>
+                        <span>Donor Search</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Analytics Dashboard</span>
+                    </div>
+                    
+                    <div class="mt-5">
+                        <small>Blood Donation System v1.0</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="login-right">
+                    <div class="text-center mb-5">
+                        <h3 style="color: var(--primary-red);">Hospital Login</h3>
+                        <p class="text-muted">Enter your credentials to access the hospital dashboard</p>
+                    </div>
+                    
+                    <form id="loginForm">
+                        <div class="mb-4">
+                            <label for="email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="remember">
+                                <label class="form-check-label" for="remember">
+                                    Remember me
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid mb-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt me-2"></i> Login to Dashboard
+                            </button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <small class="text-muted">
+                                Don't have an account? 
+                                <a href="http://localhost:5002" class="text-decoration-none">Register here</a>
+                            </small>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <a href="http://localhost:5004" class="text-decoration-none">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+    <script>
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+            
+            try {
+                const response = await fetch('http://localhost:5002/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Store authentication token and hospital ID
+                    const authToken = btoa(email + ':' + new Date().toISOString());
+                    
+                    console.log('Login Success - Storing hospital data:', {
+                        email: email,
+                        hospitalId: result.hospital._id,
+                        hospitalName: result.hospital.name,
+                        remember: remember
+                    });
+                    
+                    if (remember) {
+                        localStorage.setItem('hospitalToken', authToken);
+                        localStorage.setItem('hospitalId', result.hospital._id);
+                        console.log('Stored in localStorage:', {
+                            hospitalId: localStorage.getItem('hospitalId'),
+                            hospitalToken: localStorage.getItem('hospitalToken') ? 'exists' : 'missing'
+                        });
+                    } else {
+                        sessionStorage.setItem('hospitalToken', authToken);
+                        sessionStorage.setItem('hospitalId', result.hospital._id);
+                        console.log('Stored in sessionStorage:', {
+                            hospitalId: sessionStorage.getItem('hospitalId'),
+                            hospitalToken: sessionStorage.getItem('hospitalToken') ? 'exists' : 'missing'
+                        });
+                    }
+                    
+                    alert('Login successful! Redirecting to hospital dashboard...');
+                    window.location.href = 'http://localhost:5002/dashboard';
+                } else {
+                    alert('Login failed: ' + result.error);
+                    
+                    // Clear password field
+                    document.getElementById('password').value = '';
+                    
+                    // Add error styling
+                    const passwordField = document.getElementById('password');
+                    passwordField.classList.add('is-invalid');
+                    setTimeout(() => {
+                        passwordField.classList.remove('is-invalid');
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('An error occurred during login. Please try again.');
+            }
+        });
+        
+        // Check if user is already logged in
+        function checkAuth() {
+            const token = localStorage.getItem('hospitalToken') || sessionStorage.getItem('hospitalToken');
+            if (token) {
+                // In production, validate token with server
+                window.location.href = 'http://localhost:5002/dashboard';
+            }
+        }
+        
+        // Clear all storage for testing
+        function clearAllStorage() {
+            console.log('Clearing all storage...');
+            localStorage.removeItem('hospitalId');
+            localStorage.removeItem('hospitalToken');
+            sessionStorage.removeItem('hospitalId');
+            sessionStorage.removeItem('hospitalToken');
+            console.log('Storage cleared');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Clear storage for testing
+            clearAllStorage();
+            checkAuth();
+        });
+    </script>
+</body>
+</html>

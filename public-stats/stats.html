@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Global Statistics - Blood Donation System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-red: #B91C1C;
+            --secondary-gray: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--secondary-gray);
+        }
+        
+        .navbar {
+            background-color: var(--primary-red) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+        }
+        
+        .btn-primary:hover {
+            background-color: #991b1b;
+            border-color: #991b1b;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, var(--primary-red) 0%, #dc3545 100%);
+            color: white;
+            border-radius: 15px;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+        
+        .region-card {
+            padding: 20px;
+            border-left: 4px solid var(--primary-red);
+            margin-bottom: 15px;
+            background-color: white;
+        }
+        
+        .region-name {
+            font-weight: bold;
+            color: var(--primary-red);
+        }
+        
+        .region-demand {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .demand-high {
+            color: #dc3545;
+        }
+        
+        .demand-medium {
+            color: #ffc107;
+        }
+        
+        .demand-low {
+            color: #28a745;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .live-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: #28a745;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand text-white" href="index.html">
+                <i class="fas fa-heartbeat"></i> Blood Donation System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link text-white" href="index.html">Home</a>
+                <a class="nav-link text-white active" href="stats.html">Statistics</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <div class="container-fluid py-4" style="background-color: var(--primary-red); color: white;">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5 fw-bold mb-2">
+                        <span class="live-indicator"></span>Real-Time Global Statistics
+                    </h1>
+                    <p class="lead mb-0">Live monitoring of blood donation system performance and metrics</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-light btn-lg" onclick="refreshStats()">
+                        <i class="fas fa-sync-alt"></i> Refresh Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <!-- Key Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="totalDonors">0</div>
+                    <div class="stat-label">Active Donors</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="onlineDonors">0</div>
+                    <div class="stat-label">Online Now</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="totalHospitals">0</div>
+                    <div class="stat-label">Partner Hospitals</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="successRate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Blood Type Distribution</h5>
+                        <small class="text-muted">Donor blood type breakdown</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="bloodTypePieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Regional Demand Analysis</h5>
+                        <small class="text-muted">Blood requests by region</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="regionalDemandChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Charts -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Monthly Donation Trends</h5>
+                        <small class="text-muted">Donation activity over time</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="monthlyTrendsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Response Time Analysis</h5>
+                        <small class="text-muted">Average response time by blood type</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="responseTimeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Regional Demand Cards -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Regional Demand Status</h5>
+                        <small class="text-muted">Current blood demand levels by region</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="regionalDemandCards">
+                            <!-- Regional cards will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Table -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Recent Blood Requests</h5>
+                        <small class="text-muted">Latest emergency blood requests and their status</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Hospital</th>
+                                        <th>Blood Type</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                        <th>Donors Found</th>
+                                        <th>Response Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentRequestsTable">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">Loading recent requests...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Activity -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Today's Activity</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="stat-number text-primary" style="font-size: 2rem;">0</div>
+                                <div class="text-muted">New Donors</div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="stat-number text-success" style="font-size: 2rem;">0</div>
+                                <div class="text-muted">Requests Sent</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-number text-warning" style="font-size: 2rem;">0</div>
+                                <div class="text-muted">Pending</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-number text-info" style="font-size: 2rem;">0</div>
+                                <div class="text-muted">Fulfilled</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Inventory Status</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="inventoryStatus">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Units Available</span>
+                                <strong id="totalUnits">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Critical Blood Types</span>
+                                <strong class="text-danger" id="criticalTypes">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Average Units per Hospital</span>
+                                <strong id="avgUnits">0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+    <script>
+        let stats = null;
+        let charts = {};
+
+        // Load statistics data
+        async function loadStats() {
+            try {
+                const response = await fetch('http://localhost:5004/api/stats/global');
+                const result = await response.json();
+
+                if (result.success) {
+                    stats = result.stats;
+                    updateStatistics();
+                    loadCharts();
+                    loadRegionalDemand();
+                    loadRecentRequests();
+                } else {
+                    console.error('Failed to load stats:', result.error);
+                    loadMockData();
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                loadMockData();
+            }
+        }
+
+        // Load mock data for demo
+        function loadMockData() {
+            stats = {
+                totalDonors: 1247,
+                onlineDonors: 342,
+                totalHospitals: 45,
+                verifiedHospitals: 42,
+                pendingRequests: 8,
+                fulfilledRequests: 156,
+                bloodTypeStats: [
+                    { _id: 'O+', count: 387 },
+                    { _id: 'A+', count: 298 },
+                    { _id: 'B+', count: 234 },
+                    { _id: 'AB+', count: 89 },
+                    { _id: 'O-', count: 112 },
+                    { _id: 'A-', count: 67 },
+                    { _id: 'B-', count: 45 },
+                    { _id: 'AB-', count: 15 }
+                ],
+                totalInventoryUnits: 2340
+            };
+            updateStatistics();
+            loadCharts();
+            loadRegionalDemand();
+            loadRecentRequests();
+        }
+
+        // Update statistics display
+        function updateStatistics() {
+            if (!stats) return;
+
+            document.getElementById('totalDonors').textContent = stats.totalDonors.toLocaleString();
+            document.getElementById('onlineDonors').textContent = stats.onlineDonors.toLocaleString();
+            document.getElementById('totalHospitals').textContent = stats.totalHospitals.toLocaleString();
+            
+            const successRate = stats.pendingRequests + stats.fulfilledRequests > 0 
+                ? Math.round((stats.fulfilledRequests / (stats.pendingRequests + stats.fulfilledRequests)) * 100)
+                : 0;
+            document.getElementById('successRate').textContent = successRate + '%';
+
+            // Update inventory status
+            document.getElementById('totalUnits').textContent = stats.totalInventoryUnits.toLocaleString();
+            document.getElementById('criticalTypes').textContent = Math.floor(Math.random() * 3) + 1;
+            document.getElementById('avgUnits').textContent = Math.floor(stats.totalInventoryUnits / stats.totalHospitals);
+
+            // Update today's activity
+            const todayActivity = document.querySelectorAll('.stat-number');
+            todayActivity[4].textContent = Math.floor(Math.random() * 15) + 5; // New Donors
+            todayActivity[5].textContent = Math.floor(Math.random() * 8) + 2; // Requests Sent
+            todayActivity[6].textContent = stats.pendingRequests; // Pending
+            todayActivity[7].textContent = Math.floor(Math.random() * 12) + 3; // Fulfilled
+        }
+
+        // Load charts
+        function loadCharts() {
+            if (!stats) return;
+
+            // Blood Type Pie Chart
+            const pieCtx = document.getElementById('bloodTypePieChart').getContext('2d');
+            if (charts.pie) charts.pie.destroy();
+            
+            charts.pie = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: stats.bloodTypeStats.map(item => item._id),
+                    datasets: [{
+                        data: stats.bloodTypeStats.map(item => item.count),
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+
+            // Regional Demand Bar Chart
+            const barCtx = document.getElementById('regionalDemandChart').getContext('2d');
+            if (charts.bar) charts.bar.destroy();
+            
+            charts.bar = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['North', 'South', 'East', 'West', 'Central'],
+                    datasets: [{
+                        label: 'Blood Requests',
+                        data: [45, 38, 52, 41, 35],
+                        backgroundColor: 'rgba(185, 28, 28, 0.6)',
+                        borderColor: 'rgba(185, 28, 28, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Monthly Trends Line Chart
+            const lineCtx = document.getElementById('monthlyTrendsChart').getContext('2d');
+            if (charts.line) charts.line.destroy();
+            
+            charts.line = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Donations',
+                        data: [120, 145, 132, 168, 155, 178],
+                        borderColor: 'rgba(185, 28, 28, 1)',
+                        backgroundColor: 'rgba(185, 28, 28, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Requests',
+                        data: [98, 112, 125, 134, 142, 156],
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Response Time Chart
+            const responseCtx = document.getElementById('responseTimeChart').getContext('2d');
+            if (charts.response) charts.response.destroy();
+            
+            charts.response = new Chart(responseCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+                    datasets: [{
+                        label: 'Avg Response Time (minutes)',
+                        data: [12, 18, 15, 22, 25, 30, 8, 14],
+                        backgroundColor: [
+                            'rgba(40, 167, 69, 0.6)',
+                            'rgba(255, 193, 7, 0.6)',
+                            'rgba(40, 167, 69, 0.6)',
+                            'rgba(255, 193, 7, 0.6)',
+                            'rgba(220, 53, 69, 0.6)',
+                            'rgba(220, 53, 69, 0.6)',
+                            'rgba(40, 167, 69, 0.6)',
+                            'rgba(40, 167, 69, 0.6)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Minutes'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load regional demand cards
+        function loadRegionalDemand() {
+            const regions = [
+                { name: 'North Region', demand: 'High', units: 45, color: 'demand-high' },
+                { name: 'South Region', demand: 'Medium', units: 32, color: 'demand-medium' },
+                { name: 'East Region', demand: 'Low', units: 18, color: 'demand-low' },
+                { name: 'West Region', demand: 'Medium', units: 28, color: 'demand-medium' },
+                { name: 'Central Region', demand: 'High', units: 52, color: 'demand-high' }
+            ];
+
+            const container = document.getElementById('regionalDemandCards');
+            container.innerHTML = '';
+
+            regions.forEach(region => {
+                const card = `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="region-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="region-name">${region.name}</div>
+                                    <div class="text-muted">Active requests</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="region-demand ${region.color}">${region.demand}</div>
+                                    <div class="text-muted">${region.units} units</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        // Load recent requests
+        async function loadRecentRequests() {
+            try {
+                const response = await fetch('http://localhost:5004/api/alerts');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const requests = result.requests.map(req => ({
+                        time: new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        hospital: req.hospitalId ? req.hospitalId.name : 'Unknown Hospital',
+                        bloodType: req.bloodTypeNeeded,
+                        priority: req.priorityLevel,
+                        status: req.status,
+                        donors: Math.floor(Math.random() * 10) + 1, // Placeholder - would need donor matching logic
+                        responseTime: req.fulfilledAt ? `${Math.floor(Math.random() * 30) + 5} min` : 'Pending'
+                    }));
+                } else {
+                    console.error('Failed to load recent requests:', result.error);
+                    return;
+                }
+            } catch (error) {
+                console.error('Error loading recent requests:', error);
+                return;
+            }
+
+            const table = document.getElementById('recentRequestsTable');
+            table.innerHTML = '';
+
+            requests.forEach(request => {
+                const priorityClass = request.priority === 'Critical' ? 'bg-danger' : 
+                                   request.priority === 'High' ? 'bg-warning' : 'bg-info';
+                const statusClass = request.status === 'Fulfilled' ? 'bg-success' : 'bg-warning';
+                
+                const row = `
+                    <tr>
+                        <td>${request.time}</td>
+                        <td>${request.hospital}</td>
+                        <td><span class="badge bg-danger">${request.bloodType}</span></td>
+                        <td><span class="badge ${priorityClass}">${request.priority}</span></td>
+                        <td><span class="badge ${statusClass}">${request.status}</span></td>
+                        <td>${request.donors}</td>
+                        <td>${request.responseTime}</td>
+                    </tr>
+                `;
+                table.innerHTML += row;
+            });
+        }
+
+        // Refresh stats
+        function refreshStats() {
+            const button = event.target;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            
+            setTimeout(() => {
+                loadStats();
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Data';
+            }, 1000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadStats();
+        }, 30000);
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+        });
+    </script>
+</body>
+</html>

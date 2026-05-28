@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard - Blood Donation System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-red: #B91C1C;
+            --secondary-gray: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--secondary-gray);
+        }
+        
+        .navbar {
+            background-color: var(--primary-red) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+        }
+        
+        .btn-primary:hover {
+            background-color: #991b1b;
+            border-color: #991b1b;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-online {
+            color: #28a745;
+        }
+        
+        .status-offline {
+            color: #dc3545;
+        }
+        
+        #locationMap {
+            height: 250px;
+            border-radius: 8px;
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: var(--primary-red);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+        }
+        
+        .form-switch .form-check-input {
+            width: 3rem;
+            height: 1.5rem;
+        }
+        
+        .form-switch .form-check-input:checked {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand text-white" href="http://localhost:5004">
+                <i class="fas fa-heartbeat"></i> Blood Donation System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link text-white" href="http://localhost:5004">Home</a>
+                <a class="nav-link text-white" href="http://localhost:5001/login">Login</a>
+                <a class="nav-link text-white" href="http://localhost:5001">Register</a>
+                <a class="nav-link text-white active" href="http://localhost:5001/dashboard">Dashboard</a>
+                <a class="nav-link text-white" href="#" onclick="logout()">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Profile Section -->
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body text-center">
+                        <div class="profile-avatar mx-auto mb-3">
+                            <span id="avatarInitial">D</span>
+                        </div>
+                        <h4 id="profileName">Loading...</h4>
+                        <p class="text-muted" id="profileEmail">email@example.com</p>
+                        <span class="badge" id="statusBadge">Offline</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Status Control</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="statusToggle">
+                            <label class="form-check-label" for="statusToggle">
+                                Available for Donation
+                            </label>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            When enabled, you'll receive emergency blood donation alerts
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-8">
+                <!-- Profile Details -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Profile Details</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleEditForm()">
+                            <i class="fas fa-edit"></i> Update Details
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="profileView">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Full Name:</strong> <span id="viewName">-</span></p>
+                                    <p><strong>Email:</strong> <span id="viewEmail">-</span></p>
+                                    <p><strong>Phone:</strong> <span id="viewPhone">-</span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Blood Group:</strong> <span id="viewBloodGroup">-</span></p>
+                                    <p><strong>Status:</strong> <span id="viewStatus">-</span></p>
+                                    <p><strong>Member Since:</strong> <span id="viewMemberSince">-</span></p>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <p><strong>Medical History:</strong></p>
+                                <p id="viewMedicalHistory" class="text-muted">No medical history provided</p>
+                            </div>
+                        </div>
+
+                        <form id="editForm" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="editName" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="editName">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="editPhone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="editPhone">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editMedicalHistory" class="form-label">Medical History</label>
+                                <textarea class="form-control" id="editMedicalHistory" rows="3"></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+                                <button type="button" class="btn btn-secondary" onclick="toggleEditForm()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Location View -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Your Location</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="locationMap"></div>
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <strong>Coordinates:</strong> <span id="coordinates">-</span>
+                            </small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="refreshLocation()">
+                            <i class="fas fa-sync-alt"></i> Refresh Location
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Alerts -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Recent Alerts</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="alertsList">
+                            <p class="text-muted">No alerts received yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+    <script>
+        let donorData = null;
+        let map;
+        let marker;
+
+        // Load donor profile
+        async function loadProfile() {
+            const donorId = localStorage.getItem('donorId') || sessionStorage.getItem('donorId');
+            console.log('Dashboard: Checking donorId:', donorId);
+            if (!donorId) {
+                console.log('Dashboard: No donorId found, redirecting to login');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:5001/api/donors/${donorId}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    donorData = result.donor;
+                    updateProfileDisplay();
+                    updateStatusToggle();
+                    initializeMap();
+                } else {
+                    console.error('Failed to load profile:', result.error);
+                    alert('Failed to load profile data');
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                alert('An error occurred while loading your profile');
+            }
+        }
+
+        // Update profile display
+        function updateProfileDisplay() {
+            if (!donorData) return;
+
+            // Update avatar and basic info
+            document.getElementById('avatarInitial').textContent = donorData.name.charAt(0).toUpperCase();
+            document.getElementById('profileName').textContent = donorData.name;
+            document.getElementById('profileEmail').textContent = donorData.email;
+
+            // Update status badge
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.textContent = donorData.status;
+            statusBadge.className = `badge ${donorData.status === 'Online' ? 'bg-success' : 'bg-danger'}`;
+
+            // Update profile view
+            document.getElementById('viewName').textContent = donorData.name;
+            document.getElementById('viewEmail').textContent = donorData.email;
+            document.getElementById('viewPhone').textContent = donorData.phone;
+            document.getElementById('viewBloodGroup').textContent = donorData.bloodGroup;
+            document.getElementById('viewStatus').textContent = donorData.status;
+            document.getElementById('viewMemberSince').textContent = new Date(donorData.createdAt).toLocaleDateString();
+            document.getElementById('viewMedicalHistory').textContent = donorData.medicalHistory || 'No medical history provided';
+
+            // Update edit form
+            document.getElementById('editName').value = donorData.name;
+            document.getElementById('editPhone').value = donorData.phone;
+            document.getElementById('editMedicalHistory').value = donorData.medicalHistory || '';
+
+            // Update coordinates
+            if (donorData.location && donorData.location.coordinates) {
+                const [lng, lat] = donorData.location.coordinates;
+                document.getElementById('coordinates').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            }
+        }
+
+        // Initialize map
+        function initializeMap() {
+            if (!donorData || !donorData.location) return;
+
+            const [lng, lat] = donorData.location.coordinates;
+            
+            map = L.map('locationMap').setView([lat, lng], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            marker = L.marker([lat, lng]).addTo(map);
+        }
+
+        // Update status toggle
+        function updateStatusToggle() {
+            const toggle = document.getElementById('statusToggle');
+            toggle.checked = donorData.status === 'Online';
+        }
+
+        // Toggle edit form
+        function toggleEditForm() {
+            const profileView = document.getElementById('profileView');
+            const editForm = document.getElementById('editForm');
+            
+            if (editForm.style.display === 'none') {
+                profileView.style.display = 'none';
+                editForm.style.display = 'block';
+            } else {
+                profileView.style.display = 'block';
+                editForm.style.display = 'none';
+            }
+        }
+
+        // Save profile
+        async function saveProfile() {
+            const updatedData = {
+                name: document.getElementById('editName').value,
+                phone: document.getElementById('editPhone').value,
+                medicalHistory: document.getElementById('editMedicalHistory').value
+            };
+
+            try {
+                const response = await fetch(`http://localhost:5001/api/donors/${donorData._id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    donorData = result.donor;
+                    updateProfileDisplay();
+                    toggleEditForm();
+                    alert('Profile updated successfully!');
+                } else {
+                    alert('Failed to update profile: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert('An error occurred while updating your profile');
+            }
+        }
+
+        // Handle status toggle
+        document.getElementById('statusToggle').addEventListener('change', async (e) => {
+            const newStatus = e.target.checked ? 'Online' : 'Offline';
+
+            try {
+                const response = await fetch(`http://localhost:5001/api/donors/${donorData._id}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    donorData = result.donor;
+                    updateProfileDisplay();
+                } else {
+                    alert('Failed to update status: ' + result.error);
+                    e.target.checked = !e.target.checked; // Revert toggle
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+                alert('An error occurred while updating your status');
+                e.target.checked = !e.target.checked; // Revert toggle
+            }
+        });
+
+        // Refresh location
+        function refreshLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const newLat = position.coords.latitude;
+                        const newLng = position.coords.longitude;
+                        
+                        // Update coordinates display
+                        document.getElementById('coordinates').textContent = 
+                            `${newLat.toFixed(6)}, ${newLng.toFixed(6)}`;
+                        
+                        // Update map
+                        if (map && marker) {
+                            map.setView([newLat, newLng], 15);
+                            marker.setLatLng([newLat, newLng]);
+                        }
+                        
+                        // Update server (optional - you might want to add this API endpoint)
+                        console.log('Location updated:', newLat, newLng);
+                    },
+                    (error) => {
+                        console.error('Error getting location:', error);
+                        alert('Unable to get current location');
+                    }
+                );
+            } else {
+                alert('Geolocation is not supported by this browser');
+            }
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('donorId');
+            window.location.href = 'http://localhost:5004';
+        }
+
+        // Load recent alerts
+        async function loadRecentAlerts() {
+            try {
+                const response = await fetch('http://localhost:5001/api/alerts');
+                const result = await response.json();
+
+                if (result.success && result.requests.length > 0) {
+                    const alertsList = document.getElementById('alertsList');
+                    alertsList.innerHTML = '';
+
+                    // Show last 5 alerts
+                    result.requests.slice(0, 5).forEach(request => {
+                        const alertDate = new Date(request.createdAt).toLocaleString();
+                        const alertHtml = `
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <strong>Blood Needed:</strong> ${request.bloodTypeNeeded}<br>
+                                <strong>Priority:</strong> ${request.priorityLevel}<br>
+                                <small class="text-muted">${alertDate}</small>
+                            </div>
+                        `;
+                        alertsList.innerHTML += alertHtml;
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProfile();
+            loadRecentAlerts();
+        });
+    </script>
+</body>
+</html>

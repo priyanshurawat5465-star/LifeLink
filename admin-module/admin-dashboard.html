@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Blood Donation System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-red: #B91C1C;
+            --secondary-gray: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--secondary-gray);
+        }
+        
+        .navbar {
+            background-color: var(--primary-red) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+        }
+        
+        .btn-primary:hover {
+            background-color: #991b1b;
+            border-color: #991b1b;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-red);
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .badge-online {
+            background-color: #28a745;
+        }
+        
+        .badge-offline {
+            background-color: #dc3545;
+        }
+        
+        .badge-verified {
+            background-color: #007bff;
+        }
+        
+        .badge-pending {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .action-buttons {
+            white-space: nowrap;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+            color: white;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            border-color: var(--primary-red);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand text-white" href="../public-stats/index.html">
+                <i class="fas fa-shield-alt"></i> Blood Donation System - Admin
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link text-white" href="http://localhost:5004">Home</a>
+                <a class="nav-link text-white" href="http://localhost:5003">Login</a>
+                <a class="nav-link text-white active" href="http://localhost:5003/dashboard">Dashboard</a>
+                <a class="nav-link text-white" href="#" onclick="logout()">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- System Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="totalDonors">0</div>
+                    <div class="stat-label">Total Donors</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="totalHospitals">0</div>
+                    <div class="stat-label">Total Hospitals</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="alertsSent">0</div>
+                    <div class="stat-label">Alerts Sent</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="successfulMatches">0</div>
+                    <div class="stat-label">Successful Matches</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Blood Type Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="bloodTypeChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">System Activity</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="activityChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Tabs -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">User Management</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="userTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="donors-tab" data-bs-toggle="tab" data-bs-target="#donors" type="button" role="tab">
+                            Donors <span class="badge bg-secondary ms-1" id="donorCount">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="hospitals-tab" data-bs-toggle="tab" data-bs-target="#hospitals" type="button" role="tab">
+                            Hospitals <span class="badge bg-secondary ms-1" id="hospitalCount">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">
+                            System Logs
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="userTabsContent">
+                    <!-- Donors Tab -->
+                    <div class="tab-pane fade show active" id="donors" role="tabpanel">
+                        <div class="table-responsive mt-3">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Blood Group</th>
+                                        <th>Status</th>
+                                        <th>Registered</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="donorsTable">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">Loading donors...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Hospitals Tab -->
+                    <div class="tab-pane fade" id="hospitals" role="tabpanel">
+                        <div class="table-responsive mt-3">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Address</th>
+                                        <th>License</th>
+                                        <th>Verification</th>
+                                        <th>Registered</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hospitalsTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">Loading hospitals...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- System Logs Tab -->
+                    <div class="tab-pane fade" id="logs" role="tabpanel">
+                        <div class="mt-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Alert Statistics</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <p><strong>Total Alerts Sent:</strong></p>
+                                                    <p><strong>Successful Matches:</strong></p>
+                                                    <p><strong>Success Rate:</strong></p>
+                                                </div>
+                                                <div class="col-6 text-end">
+                                                    <p id="totalAlertsSent">0</p>
+                                                    <p id="totalSuccessful">0</p>
+                                                    <p id="successRate">0%</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Recent Activity</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="recentActivity">
+                                                <p class="text-muted">Loading recent activity...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donor Details Modal -->
+    <div class="modal fade" id="donorDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Donor Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="donorDetailsContent">
+                    <!-- Donor details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hospital Details Modal -->
+    <div class="modal fade" id="hospitalDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Hospital Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="hospitalDetailsContent">
+                    <!-- Hospital details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+    <script>
+        let donors = [];
+        let hospitals = [];
+        let stats = null;
+        let bloodTypeChart = null;
+        let activityChart = null;
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                // Load all data in parallel
+                const [donorsResponse, hospitalsResponse, statsResponse] = await Promise.all([
+                    fetch('http://localhost:5003/api/admin/donors'),
+                    fetch('http://localhost:5003/api/admin/hospitals'),
+                    fetch('http://localhost:5003/api/stats/global')
+                ]);
+
+                const donorsResult = await donorsResponse.json();
+                const hospitalsResult = await hospitalsResponse.json();
+                const statsResult = await statsResponse.json();
+
+                if (donorsResult.success) {
+                    donors = donorsResult.donors;
+                    loadDonorsTable();
+                }
+
+                if (hospitalsResult.success) {
+                    hospitals = hospitalsResult.hospitals;
+                    loadHospitalsTable();
+                }
+
+                if (statsResult.success) {
+                    stats = statsResult.stats;
+                    updateStatistics();
+                    loadCharts();
+                    loadSystemLogs();
+                }
+
+                updateCounts();
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            if (!stats) return;
+
+            document.getElementById('totalDonors').textContent = stats.totalDonors;
+            document.getElementById('totalHospitals').textContent = stats.totalHospitals;
+            document.getElementById('alertsSent').textContent = stats.pendingRequests + stats.fulfilledRequests;
+            document.getElementById('successfulMatches').textContent = stats.fulfilledRequests;
+        }
+
+        // Update counts
+        function updateCounts() {
+            document.getElementById('donorCount').textContent = donors.length;
+            document.getElementById('hospitalCount').textContent = hospitals.length;
+        }
+
+        // Load donors table
+        function loadDonorsTable() {
+            const table = document.getElementById('donorsTable');
+            table.innerHTML = '';
+
+            donors.forEach(donor => {
+                const statusClass = donor.status === 'Online' ? 'badge-online' : 'badge-offline';
+                const registeredDate = new Date(donor.createdAt).toLocaleDateString();
+                
+                const row = `
+                    <tr>
+                        <td>${donor.name}</td>
+                        <td>${donor.email}</td>
+                        <td>${donor.phone}</td>
+                        <td><span class="badge bg-danger">${donor.bloodGroup}</span></td>
+                        <td><span class="badge ${statusClass}">${donor.status}</span></td>
+                        <td>${registeredDate}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewDonorDetails('${donor._id}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteDonor('${donor._id}', '${donor.name}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                table.innerHTML += row;
+            });
+        }
+
+        // Load hospitals table
+        function loadHospitalsTable() {
+            const table = document.getElementById('hospitalsTable');
+            table.innerHTML = '';
+
+            hospitals.forEach(hospital => {
+                const verificationClass = hospital.verified ? 'badge-verified' : 'badge-pending';
+                const verificationText = hospital.verified ? 'Verified' : 'Pending';
+                const registeredDate = new Date(hospital.createdAt).toLocaleDateString();
+                
+                const row = `
+                    <tr>
+                        <td>${hospital.name}</td>
+                        <td>${hospital.address}</td>
+                        <td>${hospital.license}</td>
+                        <td><span class="badge ${verificationClass}">${verificationText}</span></td>
+                        <td>${registeredDate}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewHospitalDetails('${hospital._id}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            ${!hospital.verified ? `
+                                <button class="btn btn-sm btn-outline-success" onclick="verifyHospital('${hospital._id}', '${hospital.name}')">
+                                    <i class="fas fa-check"></i> Verify
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteHospital('${hospital._id}', '${hospital.name}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                table.innerHTML += row;
+            });
+        }
+
+        // View donor details
+        function viewDonorDetails(donorId) {
+            const donor = donors.find(d => d._id === donorId);
+            if (!donor) return;
+
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Name:</strong> ${donor.name}</p>
+                        <p><strong>Email:</strong> ${donor.email}</p>
+                        <p><strong>Phone:</strong> ${donor.phone}</p>
+                        <p><strong>Blood Group:</strong> ${donor.bloodGroup}</p>
+                        <p><strong>Status:</strong> ${donor.status}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Medical History:</strong></p>
+                        <p>${donor.medicalHistory || 'No medical history provided'}</p>
+                        <p><strong>Location:</strong></p>
+                        <p>${donor.location.coordinates[1]}, ${donor.location.coordinates[0]}</p>
+                        <p><strong>Registered:</strong> ${new Date(donor.createdAt).toLocaleString()}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('donorDetailsContent').innerHTML = content;
+            new bootstrap.Modal(document.getElementById('donorDetailsModal')).show();
+        }
+
+        // View hospital details
+        function viewHospitalDetails(hospitalId) {
+            const hospital = hospitals.find(h => h._id === hospitalId);
+            if (!hospital) return;
+
+            const inventoryHtml = Object.entries(hospital.unitsAvailable)
+                .map(([bloodType, units]) => `<span class="badge bg-secondary me-1">${bloodType}: ${units}</span>`)
+                .join('');
+
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Name:</strong> ${hospital.name}</p>
+                        <p><strong>Address:</strong> ${hospital.address}</p>
+                        <p><strong>License:</strong> ${hospital.license}</p>
+                        <p><strong>Verification Status:</strong> ${hospital.verified ? 'Verified' : 'Pending'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Blood Inventory:</strong></p>
+                        <p>${inventoryHtml}</p>
+                        <p><strong>Location:</strong></p>
+                        <p>${hospital.location.coordinates[1]}, ${hospital.location.coordinates[0]}</p>
+                        <p><strong>Registered:</strong> ${new Date(hospital.createdAt).toLocaleString()}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('hospitalDetailsContent').innerHTML = content;
+            new bootstrap.Modal(document.getElementById('hospitalDetailsModal')).show();
+        }
+
+        // Delete donor
+        async function deleteDonor(donorId, donorName) {
+            if (!confirm(`Are you sure you want to delete donor "${donorName}"?`)) return;
+
+            try {
+                const response = await fetch(`http://localhost:5003/api/admin/donors/${donorId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    donors = donors.filter(d => d._id !== donorId);
+                    loadDonorsTable();
+                    updateCounts();
+                    alert('Donor deleted successfully');
+                } else {
+                    alert('Failed to delete donor: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error deleting donor:', error);
+                alert('An error occurred while deleting the donor');
+            }
+        }
+
+        // Verify hospital
+        async function verifyHospital(hospitalId, hospitalName) {
+            if (!confirm(`Are you sure you want to verify hospital "${hospitalName}"?`)) return;
+
+            try {
+                const response = await fetch(`http://localhost:5003/api/admin/hospitals/${hospitalId}/verify`, {
+                    method: 'PUT'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const hospitalIndex = hospitals.findIndex(h => h._id === hospitalId);
+                    if (hospitalIndex !== -1) {
+                        hospitals[hospitalIndex] = result.hospital;
+                    }
+                    loadHospitalsTable();
+                    alert('Hospital verified successfully');
+                } else {
+                    alert('Failed to verify hospital: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error verifying hospital:', error);
+                alert('An error occurred while verifying the hospital');
+            }
+        }
+
+        // Delete hospital
+        async function deleteHospital(hospitalId, hospitalName) {
+            if (!confirm(`Are you sure you want to delete hospital "${hospitalName}"?`)) return;
+
+            try {
+                const response = await fetch(`http://localhost:5003/api/admin/hospitals/${hospitalId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    hospitals = hospitals.filter(h => h._id !== hospitalId);
+                    loadHospitalsTable();
+                    updateCounts();
+                    alert('Hospital deleted successfully');
+                } else {
+                    alert('Failed to delete hospital: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error deleting hospital:', error);
+                alert('An error occurred while deleting the hospital');
+            }
+        }
+
+        // Load charts
+        function loadCharts() {
+            if (!stats) return;
+
+            // Blood Type Distribution Chart
+            const bloodTypeCtx = document.getElementById('bloodTypeChart').getContext('2d');
+            
+            if (bloodTypeChart) {
+                bloodTypeChart.destroy();
+            }
+
+            const bloodTypeData = stats.bloodTypeStats || [];
+            const labels = bloodTypeData.map(item => item._id);
+            const data = bloodTypeData.map(item => item.count);
+
+            bloodTypeChart = new Chart(bloodTypeCtx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+
+            // Activity Chart
+            const activityCtx = document.getElementById('activityChart').getContext('2d');
+            
+            if (activityChart) {
+                activityChart.destroy();
+            }
+
+            activityChart = new Chart(activityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Donors', 'Hospitals', 'Pending Requests', 'Fulfilled Requests'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [
+                            stats.totalDonors,
+                            stats.totalHospitals,
+                            stats.pendingRequests,
+                            stats.fulfilledRequests
+                        ],
+                        backgroundColor: 'rgba(185, 28, 28, 0.6)',
+                        borderColor: 'rgba(185, 28, 28, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load system logs
+        function loadSystemLogs() {
+            if (!stats) return;
+
+            document.getElementById('totalAlertsSent').textContent = stats.pendingRequests + stats.fulfilledRequests;
+            document.getElementById('totalSuccessful').textContent = stats.fulfilledRequests;
+            
+            const successRate = stats.pendingRequests + stats.fulfilledRequests > 0 
+                ? Math.round((stats.fulfilledRequests / (stats.pendingRequests + stats.fulfilledRequests)) * 100)
+                : 0;
+            document.getElementById('successRate').textContent = successRate + '%';
+
+            // Load recent activity
+            const activityHtml = `
+                <div class="activity-item">
+                    <small class="text-muted">Last 24 hours</small>
+                    <p>New donors registered: <strong>${Math.floor(Math.random() * 10) + 1}</strong></p>
+                    <p>Blood requests sent: <strong>${Math.floor(Math.random() * 5) + 1}</strong></p>
+                    <p>Successful donations: <strong>${Math.floor(Math.random() * 8) + 2}</strong></p>
+                </div>
+            `;
+            document.getElementById('recentActivity').innerHTML = activityHtml;
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('adminToken');
+            window.location.href = 'http://localhost:5003';
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardData();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Donation & Alert System - Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #B91C1C;
+            --secondary-gray: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--secondary-gray);
+        }
+        
+        .navbar {
+            background-color: var(--primary-red) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+        }
+        
+        .btn-primary:hover {
+            background-color: #991b1b;
+            border-color: #991b1b;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-red) 0%, #dc3545 100%);
+            color: white;
+            padding: 80px 0;
+        }
+        
+        .module-card {
+            border: none;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .module-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .module-card .card-body {
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .module-icon {
+            font-size: 3rem;
+            color: var(--primary-red);
+            margin-bottom: 20px;
+        }
+        
+        .module-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--primary-red);
+        }
+        
+        .module-description {
+            color: #6c757d;
+            margin-bottom: 25px;
+        }
+        
+        .stats-section {
+            background-color: white;
+            padding: 60px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary-red);
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+        
+        .feature-section {
+            padding: 80px 0;
+        }
+        
+        .feature-card {
+            text-align: center;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            height: 100%;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-red);
+            margin-bottom: 20px;
+        }
+        
+        .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 40px 0;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand text-white" href="index.html">
+                <i class="fas fa-heartbeat"></i> Blood Donation System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link text-white active" href="index.html">Home</a>
+                <a class="nav-link text-white" href="stats.html">Statistics</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">Save Lives Through Blood Donation</h1>
+                    <p class="lead mb-4">Connect blood donors with hospitals in real-time. Our intelligent alert system ensures that blood reaches those who need it most, when they need it most.</p>
+                    <div class="d-flex gap-3">
+                        <a href="stats.html" class="btn btn-light btn-lg">
+                            <i class="fas fa-chart-bar"></i> View Statistics
+                        </a>
+                        <a href="#modules" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-arrow-down"></i> Explore Modules
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="text-center">
+                        <i class="fas fa-heart" style="font-size: 8rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Stats -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalDonors">0</div>
+                        <div class="stat-label">Active Donors</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalHospitals">0</div>
+                        <div class="stat-label">Partner Hospitals</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-number" id="livesSaved">0</div>
+                        <div class="stat-label">Lives Saved</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-number" id="responseTime">0</div>
+                        <div class="stat-label">Avg Response (min)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Module Cards -->
+    <section id="modules" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold" style="color: var(--primary-red);">System Modules</h2>
+                <p class="lead text-muted">Choose your role to access the appropriate features</p>
+            </div>
+
+            <div class="row g-4">
+                <!-- Donor Module -->
+                <div class="col-lg-6">
+                    <div class="card module-card">
+                        <div class="card-body">
+                            <div class="module-icon pulse-animation">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h3 class="module-title">Donor Module</h3>
+                            <p class="module-description">Register as a blood donor, manage your profile, and receive emergency alerts when your blood type is needed nearby.</p>
+                            <ul class="text-start list-unstyled mb-4">
+                                <li><i class="fas fa-check text-success me-2"></i>Quick registration with geolocation</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Online/Offline availability toggle</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Real-time emergency alerts</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Medical history management</li>
+                            </ul>
+                            <div class="d-grid gap-2">
+                                <a href="http://localhost:5001/login" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-sign-in-alt"></i> Donor Login
+                                </a>
+                                <a href="http://localhost:5001" class="btn btn-outline-primary btn-lg">
+                                    <i class="fas fa-user-plus"></i> New Donor Registration
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hospital Module -->
+                <div class="col-lg-6">
+                    <div class="card module-card">
+                        <div class="card-body">
+                            <div class="module-icon pulse-animation">
+                                <i class="fas fa-hospital"></i>
+                            </div>
+                            <h3 class="module-title">Hospital Module</h3>
+                            <p class="module-description">Manage blood inventory, generate emergency requests, and track donor responses with advanced analytics.</p>
+                            <ul class="text-start list-unstyled mb-4">
+                                <li><i class="fas fa-check text-success me-2"></i>Blood inventory management</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Emergency blood requests</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Geographic donor search</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Analytics and reporting</li>
+                            </ul>
+                            <div class="d-grid gap-2">
+                                <a href="http://localhost:5002/login" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-sign-in-alt"></i> Hospital Login
+                                </a>
+                                <a href="http://localhost:5002" class="btn btn-outline-primary btn-lg">
+                                    <i class="fas fa-hospital"></i> New Hospital Registration
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Module -->
+                <div class="col-lg-6">
+                    <div class="card module-card">
+                        <div class="card-body">
+                            <div class="module-icon pulse-animation">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h3 class="module-title">Admin Module</h3>
+                            <p class="module-description">System administration with user management, verification processes, and comprehensive system monitoring.</p>
+                            <ul class="text-start list-unstyled mb-4">
+                                <li><i class="fas fa-check text-success me-2"></i>User management (Donors/Hospitals)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Hospital verification</li>
+                                <li><i class="fas fa-check text-success me-2"></i>System logs and analytics</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Performance monitoring</li>
+                            </ul>
+                            <a href="http://localhost:5003" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-arrow-right"></i> Enter Admin Portal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Module -->
+                <div class="col-lg-6">
+                    <div class="card module-card">
+                        <div class="card-body">
+                            <div class="module-icon pulse-animation">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <h3 class="module-title">Public Statistics</h3>
+                            <p class="module-description">View real-time global statistics, blood type distributions, and regional demand analysis.</p>
+                            <ul class="text-start list-unstyled mb-4">
+                                <li><i class="fas fa-check text-success me-2"></i>Real-time global statistics</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Blood type distribution charts</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Regional demand analysis</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Success rate metrics</li>
+                            </ul>
+                            <a href="http://localhost:5004/stats" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-arrow-right"></i> View Statistics
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="feature-section bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold" style="color: var(--primary-red);">Key Features</h2>
+                <p class="lead text-muted">Advanced technology saving lives every day</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <h4>Geolocation-Based Alerts</h4>
+                        <p class="text-muted">Find the nearest available donors based on real-time location data for faster response times.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <h4>Instant Notifications</h4>
+                        <p class="text-muted">Send emergency blood requests to matching donors within seconds of hospital requests.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h4>Real-Time Analytics</h4>
+                        <p class="text-muted">Monitor system performance, track success rates, and analyze blood type distribution.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h4>Mobile Responsive</h4>
+                        <p class="text-muted">Access the system from any device with our fully responsive web application.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <h4>Secure Platform</h4>
+                        <p class="text-muted">Your data is protected with enterprise-grade security and privacy controls.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h4>24/7 Availability</h4>
+                        <p class="text-muted">Our system operates round the clock to ensure blood is always available when needed.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="py-5" style="background-color: var(--primary-red); color: white;">
+        <div class="container text-center">
+            <h2 class="display-5 fw-bold mb-4">Ready to Save Lives?</h2>
+            <p class="lead mb-4">Join our network of donors and hospitals working together to make a difference.</p>
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="http://localhost:5001" class="btn btn-light btn-lg">
+                    <i class="fas fa-heart"></i> Become a Donor
+                </a>
+                <a href="stats.html" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-chart-bar"></i> View Impact
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5><i class="fas fa-heartbeat"></i> Blood Donation System</h5>
+                    <p>Connecting donors with hospitals to save lives through intelligent blood donation management.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="index.html" class="text-white text-decoration-none">Home</a></li>
+                        <li><a href="stats.html" class="text-white text-decoration-none">Statistics</a></li>
+                        <li><a href="../donor-module/registration.html" class="text-white text-decoration-none">Donor Registration</a></li>
+                        <li><a href="../hospital-module/hospital-dashboard.html" class="text-white text-decoration-none">Hospital Portal</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>Contact</h5>
+                    <p><i class="fas fa-envelope"></i> info@blooddonation.com</p>
+                    <p><i class="fas fa-phone"></i> +1-800-BLOOD</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Available Nationwide</p>
+                </div>
+            </div>
+            <hr class="bg-white">
+            <div class="text-center">
+                <p>&copy; 2026 Blood Donation & Alert System. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+    <script>
+        // Load quick stats
+        async function loadQuickStats() {
+            try {
+                const response = await fetch('http://localhost:5004/api/stats/global');
+                const result = await response.json();
+
+                if (result.success) {
+                    const stats = result.stats;
+                    
+                    // Animate numbers
+                    animateNumber('totalDonors', stats.totalDonors);
+                    animateNumber('totalHospitals', stats.totalHospitals);
+                    animateNumber('livesSaved', stats.fulfilledRequests * 2); // Estimate
+                    animateNumber('responseTime', Math.floor(Math.random() * 15) + 5); // Mock data
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Use mock data for demo
+                animateNumber('totalDonors', 1247);
+                animateNumber('totalHospitals', 45);
+                animateNumber('livesSaved', 892);
+                animateNumber('responseTime', 12);
+            }
+        }
+
+        // Animate number counting
+        function animateNumber(elementId, target) {
+            const element = document.getElementById(elementId);
+            const duration = 2000; // 2 seconds
+            const step = target / (duration / 16); // 60 FPS
+            let current = 0;
+
+            const timer = setInterval(() => {
+                current += step;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.floor(current).toLocaleString();
+            }, 16);
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadQuickStats();
+        });
+    </script>
+</body>
+</html>

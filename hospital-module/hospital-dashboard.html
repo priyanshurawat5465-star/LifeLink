@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Dashboard - Blood Donation System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-red: #B91C1C;
+            --secondary-gray: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--secondary-gray);
+        }
+        
+        .navbar {
+            background-color: var(--primary-red) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+        }
+        
+        .btn-primary:hover {
+            background-color: #991b1b;
+            border-color: #991b1b;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-red);
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        #alertMap {
+            height: 400px;
+            border-radius: 8px;
+        }
+        
+        .blood-unit {
+            display: inline-block;
+            padding: 8px 12px;
+            margin: 4px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .blood-low {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .blood-medium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .blood-high {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .priority-critical {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .priority-high {
+            background-color: #fd7e14;
+            color: white;
+        }
+        
+        .priority-medium {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .priority-low {
+            background-color: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand text-white" href="../public-stats/index.html">
+                <i class="fas fa-hospital"></i> Blood Donation System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link text-white" href="http://localhost:5004">Home</a>
+                <a class="nav-link text-white" href="http://localhost:5002/login">Login</a>
+                <a class="nav-link text-white" href="http://localhost:5002">Register</a>
+                <a class="nav-link text-white active" href="http://localhost:5002/dashboard">Dashboard</a>
+                <a class="nav-link text-white" href="#" onclick="logout()">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Hospital Profile Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Hospital Profile</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Hospital Name:</strong> <span id="hospitalName">Loading...</span></p>
+                                <p><strong>Address:</strong> <span id="hospitalAddress">Loading...</span></p>
+                                <p><strong>License:</strong> <span id="hospitalLicense">Loading...</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Verification Status:</strong> <span id="verificationStatus" class="badge">Loading...</span></p>
+                                <p><strong>Registered Since:</strong> <span id="registeredSince">Loading...</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="totalUnits">0</div>
+                    <div class="stat-label">Total Blood Units</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="requestsToday">0</div>
+                    <div class="stat-label">Requests Today</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="donorsFound">0</div>
+                    <div class="stat-label">Donors Found</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="stat-number" id="successRate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Blood Request Form -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Generate Blood Request</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="bloodRequestForm">
+                            <div class="mb-3">
+                                <label for="bloodType" class="form-label">Blood Type Needed *</label>
+                                <select class="form-control" id="bloodType" required>
+                                    <option value="">Select Blood Type</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Priority Level *</label>
+                                <select class="form-control" id="priority" required>
+                                    <option value="">Select Priority</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="searchRadius" class="form-label">Search Radius (km)</label>
+                                <input type="range" class="form-range" id="searchRadius" min="1" max="50" value="10">
+                                <div class="d-flex justify-content-between">
+                                    <small>1 km</small>
+                            <small id="radiusValue">10 km</small>
+                            <small>50 km</small>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-paper-plane"></i> Send Alert
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Inventory Management -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Blood Inventory</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="toggleInventoryEdit()">
+                    <i class="fas fa-edit"></i> Update Inventory
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="inventoryView">
+                    <div class="row" id="inventoryDisplay">
+                        <!-- Inventory will be loaded here -->
+                    </div>
+                </div>
+                <form id="inventoryEditForm" style="display: none;">
+                    <div class="row" id="inventoryEdit">
+                        <!-- Edit form will be loaded here -->
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="button" class="btn btn-primary" onclick="saveInventory()">Save Changes</button>
+                        <button type="button" class="btn btn-secondary" onclick="toggleInventoryEdit()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert System Map -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Alert System - Donor Search</h5>
+            </div>
+            <div class="card-body">
+                <div id="alertMap"></div>
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><strong>Search Radius:</strong> <span id="currentRadius">10 km</span></span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="resetMap()">
+                            <i class="fas fa-redo"></i> Reset View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Inventory Analytics</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="inventoryChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Requests -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Blood Requests</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Blood Type</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Donors Found</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requestsTable">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Loading requests...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+<script>
+    let hospitalData = null;
+    let map;
+    let searchCircle;
+    let inventoryChart;
+
+    // Load hospital profile
+    async function loadHospitalProfile() {
+        let hospitalId = localStorage.getItem('hospitalId') || sessionStorage.getItem('hospitalId');
+        console.log('Hospital Dashboard: Loading profile for hospitalId:', hospitalId);
+        console.log('Hospital Dashboard: Storage check:', {
+            localStorage: localStorage.getItem('hospitalId'),
+            sessionStorage: sessionStorage.getItem('hospitalId')
+        });
+        
+        // Clear demo-hospital ID and force real data loading
+        if (hospitalId === 'demo-hospital') {
+            console.log('Hospital Dashboard: Clearing demo-hospital ID, forcing real data load');
+            localStorage.removeItem('hospitalId');
+            hospitalId = null;
+        }
+        
+        // First try to load real data from database
+        try {
+            console.log('Hospital Dashboard: Attempting to load real hospital data');
+            
+            // Use the logged-in hospital ID, only fetch from database if no ID exists
+            let targetHospitalId = hospitalId;
+            if (!targetHospitalId) {
+                console.log('Hospital Dashboard: No hospitalId found, fetching first hospital from database');
+                const response = await fetch('http://localhost:5002/api/hospitals');
+                const result = await response.json();
+                
+                if (result.success && result.hospitals.length > 0) {
+                    targetHospitalId = result.hospitals[0]._id;
+                    localStorage.setItem('hospitalId', targetHospitalId);
+                    console.log('Hospital Dashboard: Found hospital in database:', targetHospitalId);
+                } else {
+                    throw new Error('No hospitals found in database');
+                }
+            } else {
+                console.log('Hospital Dashboard: Using logged-in hospital ID:', targetHospitalId);
+            }
+            
+            if (targetHospitalId && targetHospitalId !== 'demo-hospital') {
+                console.log('Hospital Dashboard: Fetching hospital data from API for ID:', targetHospitalId);
+                const response = await fetch(`http://localhost:5002/api/hospitals/${targetHospitalId}`);
+                console.log('Hospital Dashboard: API response status:', response.status);
+                const result = await response.json();
+                console.log('Hospital Dashboard: API response:', result);
+                
+                if (result.success) {
+                    hospitalData = result.hospital;
+                    console.log('Hospital Dashboard: Real hospital data loaded successfully');
+                } else {
+                    throw new Error(result.error);
+                }
+            } else {
+                throw new Error('No valid hospital ID available');
+            }
+        } catch (error) {
+            console.error('Error loading real hospital data:', error);
+            console.log('Hospital Dashboard: Falling back to mock data');
+            
+            // Fallback to mock data only when real data fails
+            hospitalData = {
+                _id: 'demo-hospital',
+                name: 'City General Hospital',
+                address: '123 Medical Center Drive, City, State 12345',
+                license: 'HOSP-2023-001',
+                verified: true,
+                createdAt: new Date('2023-01-15'),
+                location: { coordinates: [77.2090, 28.6139] }, // Delhi coordinates
+                unitsAvailable: {
+                    'A+': 15, 'A-': 5, 'B+': 12, 'B-': 3,
+                    'AB+': 8, 'AB-': 2, 'O+': 20, 'O-': 7
+                }
+            };
+            localStorage.setItem('hospitalId', hospitalData._id);
+        }
+
+        if (hospitalData) {
+            updateHospitalDisplay();
+            initializeMap();
+            loadInventoryChart();
+            loadRecentRequests();
+        }
+    }
+
+    // Update hospital display
+    function updateHospitalDisplay() {
+        if (!hospitalData) return;
+
+        document.getElementById('hospitalName').textContent = hospitalData.name;
+        document.getElementById('hospitalAddress').textContent = hospitalData.address;
+        document.getElementById('hospitalLicense').textContent = hospitalData.license;
+        document.getElementById('registeredSince').textContent = new Date(hospitalData.createdAt).toLocaleDateString();
+
+        const verificationBadge = document.getElementById('verificationStatus');
+        verificationBadge.textContent = hospitalData.verified ? 'Verified' : 'Pending';
+        verificationBadge.className = `badge ${hospitalData.verified ? 'bg-success' : 'bg-warning'}`;
+
+        updateInventoryDisplay();
+        updateStatistics();
+    }
+
+    // Update inventory display
+    function updateInventoryDisplay() {
+        const inventoryDisplay = document.getElementById('inventoryDisplay');
+        const inventoryEdit = document.getElementById('inventoryEdit');
+        
+        inventoryDisplay.innerHTML = '';
+        inventoryEdit.innerHTML = '';
+
+        const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+        
+        bloodTypes.forEach(type => {
+            const units = hospitalData.unitsAvailable[type] || 0;
+            
+            // Display view
+            const statusClass = units < 5 ? 'blood-low' : units < 15 ? 'blood-medium' : 'blood-high';
+            const displayHtml = `
+                <div class="col-md-3 mb-2">
+                    <span class="blood-unit ${statusClass}">${type}: ${units} units</span>
+                </div>
+            `;
+            inventoryDisplay.innerHTML += displayHtml;
+
+            // Edit form
+            const editHtml = `
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">${type}</label>
+                    <input type="number" class="form-control" id="edit-${type}" value="${units}" min="0">
+                </div>
+            `;
+            inventoryEdit.innerHTML += editHtml;
+        });
+    }
+
+    // Update statistics
+    function updateStatistics() {
+        if (!hospitalData) return;
+
+        const totalUnits = Object.values(hospitalData.unitsAvailable).reduce((sum, units) => sum + units, 0);
+        document.getElementById('totalUnits').textContent = totalUnits;
+
+        // Mock statistics for demo
+        document.getElementById('requestsToday').textContent = Math.floor(Math.random() * 10) + 1;
+        document.getElementById('donorsFound').textContent = Math.floor(Math.random() * 50) + 10;
+        document.getElementById('successRate').textContent = Math.floor(Math.random() * 30) + 70 + '%';
+    }
+
+    // Initialize map
+    function initializeMap() {
+        if (!hospitalData || !hospitalData.location) return;
+
+        const [lng, lat] = hospitalData.location.coordinates;
+        
+        map = L.map('alertMap').setView([lat, lng], 12);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Add hospital marker
+        L.marker([lat, lng])
+            .addTo(map)
+            .bindPopup(hospitalData.name)
+            .openPopup();
+
+        // Add search radius circle
+        updateSearchCircle();
+    }
+
+    // Update search circle
+    function updateSearchCircle() {
+        const radius = parseInt(document.getElementById('searchRadius').value) * 1000; // Convert to meters
+        
+        if (searchCircle) {
+            map.removeLayer(searchCircle);
+        }
+
+        if (hospitalData && hospitalData.location) {
+            const [lng, lat] = hospitalData.location.coordinates;
+            searchCircle = L.circle([lat, lng], {
+                color: '#B91C1C',
+                fillColor: '#B91C1C',
+                fillOpacity: 0.2,
+                radius: radius
+            }).addTo(map);
+        }
+
+        document.getElementById('currentRadius').textContent = document.getElementById('searchRadius').value + ' km';
+    }
+
+    // Handle radius slider
+    document.getElementById('searchRadius').addEventListener('input', (e) => {
+        document.getElementById('radiusValue').textContent = e.target.value + ' km';
+        updateSearchCircle();
+    });
+
+    // Handle blood request form
+    document.getElementById('bloodRequestForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (!hospitalData) {
+            alert('Hospital data not loaded. Please refresh the page.');
+            return;
+        }
+
+        const requestData = {
+            hospitalId: hospitalData._id,
+            bloodTypeNeeded: document.getElementById('bloodType').value,
+            priorityLevel: document.getElementById('priority').value,
+            location: hospitalData.location,
+            maxDistance: parseInt(document.getElementById('searchRadius').value) * 1000
+        };
+
+        console.log('Sending alert request:', requestData);
+
+        try {
+            const response = await fetch('http://localhost:5002/api/alerts/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(`Alert sent successfully! Found ${result.nearbyDonors} nearby donors.`);
+                
+                // Show donors on map
+                if (result.donors && result.donors.length > 0) {
+                    result.donors.forEach(donor => {
+                        const [lng, lat] = donor.location.coordinates;
+                        L.marker([lat, lng])
+                            .addTo(map)
+                            .bindPopup(`Donor: ${donor.name}<br>Blood: ${donor.bloodGroup}`);
+                    });
+                }
+
+                // Reset form
+                document.getElementById('bloodRequestForm').reset();
+                
+                // Reload recent requests
+                loadRecentRequests();
+            } else {
+                alert('Failed to send alert: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error sending alert:', error);
+            alert('An error occurred while sending the alert');
+        }
+    });
+
+    // Toggle inventory edit
+    function toggleInventoryEdit() {
+        const view = document.getElementById('inventoryView');
+        const edit = document.getElementById('inventoryEditForm');
+        
+        if (edit.style.display === 'none') {
+            view.style.display = 'none';
+            edit.style.display = 'block';
+        } else {
+            view.style.display = 'block';
+            edit.style.display = 'none';
+        }
+    }
+
+    // Save inventory
+    async function saveInventory() {
+        const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+        const unitsAvailable = {};
+        
+        bloodTypes.forEach(type => {
+            unitsAvailable[type] = parseInt(document.getElementById(`edit-${type}`).value) || 0;
+        });
+
+        try {
+            const response = await fetch(`http://localhost:5002/api/hospitals/${hospitalData._id}/inventory`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ unitsAvailable })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                hospitalData = result.hospital;
+                updateHospitalDisplay();
+                toggleInventoryEdit();
+                loadInventoryChart();
+                alert('Inventory updated successfully!');
+            } else {
+                alert('Failed to update inventory: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error updating inventory:', error);
+            alert('An error occurred while updating inventory');
+        }
+    }
+
+    // Load inventory chart
+    function loadInventoryChart() {
+        const ctx = document.getElementById('inventoryChart').getContext('2d');
+        
+        if (inventoryChart) {
+            inventoryChart.destroy();
+        }
+
+        const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+        const data = bloodTypes.map(type => hospitalData.unitsAvailable[type] || 0);
+
+        inventoryChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: bloodTypes,
+                datasets: [{
+                    label: 'Blood Units Available',
+                    data: data,
+                    backgroundColor: 'rgba(185, 28, 28, 0.6)',
+                    borderColor: 'rgba(185, 28, 28, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+// Load recent requests
+async function loadRecentRequests() {
+    try {
+        if (!hospitalData) {
+            console.log('Hospital data not loaded yet, skipping requests load');
+            return;
+        }
+
+        const response = await fetch(`http://localhost:5002/api/alerts?hospitalId=${hospitalData._id}`);
+        const result = await response.json();
+
+        if (result.success) {
+            const requestsTable = document.getElementById('requestsTable');
+            requestsTable.innerHTML = '';
+
+            // Requests are already filtered by hospitalId from API
+            const hospitalRequests = result.requests.slice(0, 10);
+
+            if (hospitalRequests.length === 0) {
+                requestsTable.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No requests found</td></tr>';
+                return;
+            }
+
+            hospitalRequests.forEach(request => {
+                const date = new Date(request.createdAt).toLocaleString();
+                const priorityClass = `priority-${request.priorityLevel.toLowerCase()}`;
+                
+                const row = `
+                    <tr>
+                        <td>${date}</td>
+                        <td><span class="badge bg-danger">${request.bloodTypeNeeded}</span></td>
+                        <td><span class="badge ${priorityClass}">${request.priorityLevel}</span></td>
+                        <td><span class="badge ${request.status === 'Fulfilled' ? 'bg-success' : 'bg-warning'}">${request.status}</span></td>
+                        <td>${Math.floor(Math.random() * 20) + 1}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewRequestDetails('${request._id}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                requestsTable.innerHTML += row;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading requests:', error);
+    }
+}
+
+    // View request details
+    function viewRequestDetails(requestId) {
+        alert(`Request Details: ${requestId}\n\nThis would show detailed information about the blood request including donor responses and fulfillment status.`);
+    }
+
+    // Reset map view
+    function resetMap() {
+        if (hospitalData && hospitalData.location) {
+            const [lng, lat] = hospitalData.location.coordinates;
+            map.setView([lat, lng], 12);
+            updateSearchCircle();
+        }
+    }
+
+    // Logout
+    function logout() {
+        localStorage.removeItem('hospitalId');
+        window.location.href = 'http://localhost:5004';
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadHospitalProfile();
+    });
+</script>
+</body>
+</html>
