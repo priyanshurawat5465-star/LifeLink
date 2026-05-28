@@ -146,12 +146,6 @@ public-stats/
 +-- README.md              # This file
 ```
 
-### Environment Variables
-Create a `.env` file for configuration:
-```
-PORT=5004
-MONGODB_URI=mongodb://localhost:27017/bloodDB
-```
 
 ## Charts and Visualizations
 
@@ -229,10 +223,3 @@ For demonstration purposes, this module includes mock data for:
 - CORS configuration for cross-origin requests
 - Error handling with proper HTTP status codes
 
-## License
-
-This module is part of the Blood Donation System and is licensed under the MIT License.
-
-## Support
-
-For support and queries, please contact the development team or create an issue in the main repository.
