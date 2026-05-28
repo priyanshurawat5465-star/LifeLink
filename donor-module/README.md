@@ -167,9 +167,6 @@ donor-module/
 +-- README.md              # This file
 ```
 
-### Environment Variables
-Create a `.env` file for configuration:
-```
 PORT=5001
 MONGODB_URI=mongodb://localhost:27017/bloodDB
 ```
@@ -189,11 +186,3 @@ MONGODB_URI=mongodb://localhost:27017/bloodDB
 3. **Port Already in Use**
    - Change PORT in .env file or use different port
    - Check for other processes using port 5001
-
-## License
-
-This module is part of the Blood Donation System and is licensed under the MIT License.
-
-## Support
-
-For support and queries, please contact the development team or create an issue in the main repository.
