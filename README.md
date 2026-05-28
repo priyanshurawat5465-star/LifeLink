@@ -1,8 +1,8 @@
 # Blood Donation & Alert System
 
-A comprehensive **modular** blood donation management system built with Node.js, Express, MongoDB, and Bootstrap 5. This system connects blood donors with hospitals through real-time geolocation-based alerts.
+A comprehensive modular blood donation management system built with Node.js, Express, MongoDB, and Bootstrap 5. This system connects blood donors with hospitals through real-time geolocation-based alerts.
 
-## **NEW: Modular Architecture!**
+## **Modular Architecture!**
 
 Each module now has its own independent backend and can run standalone! You can deploy individual modules without dependencies on others.
 
@@ -289,14 +289,3 @@ node server.js
    - Verify Leaflet.js CDN is accessible
    - Check internet connection for map tiles
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
